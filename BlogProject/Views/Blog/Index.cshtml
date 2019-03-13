@@ -35,14 +35,14 @@ else
                     <td>
                         <a href="@Url.Action("Edit", "Blog", new { id = record.PostId })">Edit</a>
                     </td>
-                    @*@if (User.IsInRole("Admin"))
+                    @if (User.IsInRole("Admin"))
                     {
                         <td>
-                            <form method="post" action="@Url.Action("Delete", "Movie", new { id = record.PostId })">
+                            <form method="post" action="@Url.Action("Delete", "Blog", new { id = record.PostId })">
                                 <a href="#" class="btn-delete">Delete</a>
                             </form>
                         </td>
-                    }*@
+                    }
 
                 </tr>
             }
