@@ -1,0 +1,16 @@
+﻿@model IndexPostBlogViewModel
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div style="margin-top:60px"></div>
+
+<div>
+    <h3>@Model.Title</h3>
+    <p>@Html.Raw(Model.Body)</p>
+    <div>DateCreated: @Model.DateCreated</div>
+    <div>DateUpdated: @Model.DateUpdated</div>
+</div>
