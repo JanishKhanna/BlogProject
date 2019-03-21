@@ -1,11 +1,17 @@
 ﻿@model List<IndexPostBlogViewModel>
 @{
-    ViewBag.Title = "AllPosts";
+                /**/
+
+                ViewBag.Title = "AllPosts";
 }
 
 <h2>All Posts</h2>
+<div style="margin-top:60px"></div>
 
-<a class="btn btn-primary" style="margin-top:60px" href="@Url.Action("Post", "Blog")">Add a New Post</a>
+@if (User.IsInRole("Admin"))
+ {
+    <a class="btn btn-primary" style="margin-top:60px" href="@Url.Action("Post", "Blog")">Add a New Post</a>
+ }
 
 @if (!Model.Any())
 {
@@ -20,7 +26,7 @@ else
             <tr>
                 <th>Title</th>
                 <th>Body</th>
-                <th>Date Created</th>
+                <th>Date Created</th>                
                 <th></th>
                 <th></th>
                 <th></th>
@@ -29,28 +35,41 @@ else
         <tbody>
             @foreach (var posts in Model)
             {
-                <tr>
-                    <td>@posts.Title</td>
-                    <td>@Html.Raw(posts.Body)</td>
-                    <td>@posts.DateCreated</td>
-                    <td>@Html.ActionLink("ReadMore", "Details", new { id = posts.PostId })</td>
+                if (!User.IsInRole("Admin") && posts.Published == true)
+                {
+                    <tr>
+                        <td>@posts.Title</td>
+                        <td>@Html.Raw(posts.Body)</td>
+                        <td>@posts.DateCreated</td>
+                        <td>@Html.ActionLink("ReadMore", "Details", new { id = posts.PostId })</td>
 
-                    @*<td>
-                            <a href="@Url.Action("Details", "Blog", new {  })">Details</a>
-                        </td>
+                    </tr>
+                }
+                else if (User.IsInRole("Admin"))
+                {
+                    <tr>
+                        <td>@posts.Title</td>
+                        <td>@Html.Raw(posts.Body)</td>
+                        <td>@posts.DateCreated</td>
+                        <td>@Html.ActionLink("ReadMore", "Details", new { id = posts.PostId })</td>
+
+                        @*<td>
+                            <a href="@Url.Action("DetailsByName", "Blog", new { name = posts.Title })">Details</a>
+                        </td>*@
                         <td>
-                            <a href="@Url.Action("Edit", "Blog", new { id = posts.Id })">Edit</a>
+                            <a href="@Url.Action("Edit", "Blog", new { id = posts.PostId })">Edit</a>
                         </td>
                         @if (User.IsInRole("Admin"))
                         {
                             <td>
-                                <form method="post" action="@Url.Action("Delete", "Blog", new { id = posts.Id })">
-                                    <a href="#" class="btn-delete">Delete</a>
+                                <form method="post" action="@Url.Action("Delete", "Blog", new { id = posts.PostId })">
+                                    <button class="btn-delete">Delete</button>
                                 </form>
                             </td>
-                        }*@
+                        }
+                    </tr>
+                }
 
-                </tr>
             }
         </tbody>
     </table>

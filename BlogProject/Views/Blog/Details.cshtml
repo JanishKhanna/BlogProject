@@ -1,4 +1,4 @@
-﻿@model IndexPostBlogViewModel
+﻿@model PostDetailsViewModel
 
 @{
     ViewBag.Title = "Details";
@@ -11,6 +11,43 @@
 <div>
     <h3>@Model.Title</h3>
     <p>@Html.Raw(Model.Body)</p>
-    <div>DateCreated: @Model.DateCreated</div>
-    <div>DateUpdated: @Model.DateUpdated</div>
+    <p>@Model.DateCreated</p>
+    <p>@Model.DateUpdated</p>
 </div>
+
+<h3>Comments</h3>
+
+@foreach (var comment in Model.AllComments)
+{
+    if ((User.IsInRole("Admin")))
+    {
+        <div>
+            <div style="display: flex; flex-flow:row; justify-content:space-between; width:100px;">
+                <span>@Html.ActionLink("Edit", "EditComment", new { id = comment.CommentId })</span>
+                <form method="post" action="@Url.Action("DeleteComment", "Blog", new { id = comment.CommentId })">
+                    <button style="background:none; border:none; color:deeppink" class="btn-delete">Delete</button>
+                </form>
+            </div>
+
+
+            <p>@comment.Body</p>
+            <p>User: @comment.ApplicationUser.UserName</p>
+            <p>Updated Reason: @comment.UpdatedReason</p>
+            <span>Date Created: @comment.DateCreated</span>
+            <span>Date Updated: @comment.DateUpdated</span>
+        </div>
+    }
+}
+
+<div>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        <form style="margin-top:40px" action="@Url.Action("CreateComments", "Blog", new { Id = Model.PostId})" method="post">
+            <div>Leave a Comment</div>
+            <textarea name="Body" class="form-control" rows="3"></textarea>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+    }
+</div>
+

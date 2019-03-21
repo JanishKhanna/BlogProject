@@ -38,14 +38,14 @@ namespace BlogProject.Controllers
 
             return View(model);
         }
-        
+
         public ActionResult AllPosts()
-        {          
+        {
             var model = DbContext.AllPosts
 
             .Select(p => new IndexPostBlogViewModel
-            {   
-                PostId = p.Id,                
+            {
+                PostId = p.Id,
                 Title = p.Title,
                 Body = p.Body,
                 Published = p.Published,
@@ -55,14 +55,7 @@ namespace BlogProject.Controllers
 
             }).ToList();
 
-            return View(model); 
-        }
-
-        public ActionResult Register()
-        {
-            ViewBag.Message = "Your application description page.";
-
-            return View();
+            return View(model);
         }
 
         public ActionResult LogIn()
@@ -89,8 +82,8 @@ namespace BlogProject.Controllers
             if (!ModelState.IsValid)
             {
                 return View();
-            }          
-            
+            }
+
             //string fileExtension;
 
             ////Validating file upload
@@ -116,7 +109,7 @@ namespace BlogProject.Controllers
                     Published = formData.Published,
                     DateCreated = DateTime.Now,
                     DateUpdated = DateTime.Now
-                };                
+                };
                 DbContext.AllPosts.Add(myPost);
             }
             else
@@ -129,7 +122,7 @@ namespace BlogProject.Controllers
                 }
             }
 
-            myPost.Title = formData.Title ;
+            myPost.Title = formData.Title;
             myPost.Body = formData.Body;
             myPost.Published = formData.Published;
             myPost.DateUpdated = DateTime.Now;
@@ -162,28 +155,37 @@ namespace BlogProject.Controllers
         {
             if (!id.HasValue)
             {
-                return RedirectToAction(nameof(BlogController.AllPosts));
+                return RedirectToAction(nameof(BlogController.Index));
             }
 
             var post = DbContext.AllPosts.FirstOrDefault(p => p.Id == id);
 
             if (post == null)
             {
-                return RedirectToAction(nameof(BlogController.AllPosts));
+                return RedirectToAction(nameof(BlogController.Index));
             }
 
-            var model = new IndexPostBlogViewModel
+            var model = new PostDetailsViewModel
             {
+                
                 PostId = post.Id,
                 Title = post.Title,
                 Body = post.Body,
                 Published = post.Published,
                 DateCreated = post.DateCreated,
                 DateUpdated = post.DateUpdated,
-                ApplicationUser = post.ApplicationUser
+                //ApplicationUser = post.ApplicationUser
+                AllComments = post.AllComments.Select(p => new CommentViewModel()
+                {
+                    CommentId = p.Id,
+                    Body = p.Body,
+                    DateCreated = p.DateCreated,
+                    DateUpdated = p.DateUpdated,
+                    UpdatedReason = p.UpdatedReason,
+                    ApplicationUser = p.ApplicationUser
 
+                }).ToList()
             };
-
 
             return View(model);
         }
@@ -209,7 +211,7 @@ namespace BlogProject.Controllers
 
             var model = new PostEditViewModel();
             model.Title = post.Title;
-            model.Body = post.Body;            
+            model.Body = post.Body;
             model.Published = post.Published;
 
             DbContext.SaveChanges();
@@ -238,11 +240,155 @@ namespace BlogProject.Controllers
 
             if (post != null)
             {
+                post.AllComments.Clear();
                 DbContext.AllPosts.Remove(post);
                 DbContext.SaveChanges();
             }
 
             return RedirectToAction(nameof(BlogController.AllPosts));
         }
+
+        [HttpGet]
+        [Route("Blog/{name}")]
+        public ActionResult DetailsByName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name.ToLower()))
+            {
+                return RedirectToAction(nameof(BlogController.Index));
+            }
+
+            var userId = User.Identity.GetUserId();
+
+            var post = DbContext.AllPosts.FirstOrDefault(p =>
+            p.Title == name);
+
+            if (post == null)
+            {
+                return RedirectToAction(nameof(BlogController.Index));
+            }
+
+            var model = new PostDetailsViewModel();
+            model.Title = post.Title;
+            model.Body = post.Body;
+            model.Published = post.Published;
+            model.DateCreated = post.DateCreated;
+            //model.MediaUrl = movie.MediaUrl;
+
+            return View("Details", model);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public ActionResult CreateComments(int id, CreateEditCommentViewModel formData)
+        {
+            formData.PostId = id;
+            return SaveComments(null, formData);
+        }
+
+        private ActionResult SaveComments(int? id, CreateEditCommentViewModel formData)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View();
+            }
+
+            Comments myComment;
+
+            if (!id.HasValue)
+            {
+                var userId = User.Identity.GetUserId();
+                var post = DbContext.AllPosts.FirstOrDefault(p => p.Id == formData.PostId);
+
+                if (post == null)
+                {
+                    return RedirectToAction(nameof(BlogController.Index));
+                }
+
+                myComment = new Comments()
+                {
+                    DateCreated = DateTime.Now,
+                    ApplicationUser = DbContext.Users.FirstOrDefault(p => p.Id == userId),
+                };
+
+                DbContext.AllComments.Add(myComment);
+                post.AllComments.Add(myComment);
+            }
+            else
+            {
+                myComment = DbContext.AllComments.FirstOrDefault(p => p.Id == id);
+
+                if (myComment == null)
+                {
+                    return RedirectToAction(nameof(BlogController.Details));
+                }
+                myComment.UpdatedReason = formData.UpdatedReason;
+            }
+            
+            myComment.Body = formData.Body;            
+            myComment.DateUpdated = DateTime.Now;
+
+            DbContext.SaveChanges();
+            return RedirectToAction(nameof(BlogController.Details));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin , Moderator")]
+        public ActionResult EditComment(int? id)
+        {
+            if (!id.HasValue)
+            {
+                return RedirectToAction(nameof(BlogController.Details));
+            }
+
+            var userId = User.Identity.GetUserId();
+
+            var myComment = DbContext.AllComments
+                .FirstOrDefault(p => p.Id == id);
+
+            if (myComment == null)
+            {
+                return RedirectToAction(nameof(BlogController.Index));
+            }
+
+            var model = new CreateEditCommentViewModel();            
+            model.Body = myComment.Body;
+            model.UpdatedReason = myComment.UpdatedReason;
+            model.DateUpdated = myComment.DateUpdated;
+
+            DbContext.SaveChanges();
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public ActionResult EditComment(int id, CreateEditCommentViewModel formData)
+        {
+            return SaveComments(id, formData);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin , Moderator")]
+        public ActionResult DeleteComment(int? id)
+        {
+            if (!id.HasValue)
+            {
+                return RedirectToAction(nameof(BlogController.Details));
+            }
+
+            var userId = User.Identity.GetUserId();
+
+            var myComment = DbContext.AllComments
+                .FirstOrDefault(p => p.Id == id);
+
+            if (myComment != null)
+            {                
+                DbContext.AllComments.Remove(myComment);
+                DbContext.SaveChanges();
+            }
+
+            return RedirectToAction(nameof(BlogController.Details));
+        }
+
+
     }
 }
