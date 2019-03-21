@@ -45,10 +45,9 @@ namespace BlogProject
             // This is similar to the RememberMe option when you log in.
             app.UseTwoFactorRememberBrowserCookie(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie);
 
-            // Uncomment the following lines to enable logging in with third party login providers
-            //app.UseMicrosoftAccountAuthentication(
-            //    clientId: "",
-            //    clientSecret: "");
+            app.UseMicrosoftAccountAuthentication(
+                clientId: "08d2befe-3d5c-4420-a3fc-5b5049ca4b0a",
+                clientSecret: "chRZOW80~]xdjcyONE606^)");
 
             //app.UseTwitterAuthentication(
             //   consumerKey: "",

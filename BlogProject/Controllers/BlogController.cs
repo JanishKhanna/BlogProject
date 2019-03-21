@@ -167,7 +167,7 @@ namespace BlogProject.Controllers
 
             var model = new PostDetailsViewModel
             {
-                
+
                 PostId = post.Id,
                 Title = post.Title,
                 Body = post.Body,
@@ -323,8 +323,8 @@ namespace BlogProject.Controllers
                 }
                 myComment.UpdatedReason = formData.UpdatedReason;
             }
-            
-            myComment.Body = formData.Body;            
+
+            myComment.Body = formData.Body;
             myComment.DateUpdated = DateTime.Now;
 
             DbContext.SaveChanges();
@@ -350,7 +350,7 @@ namespace BlogProject.Controllers
                 return RedirectToAction(nameof(BlogController.Index));
             }
 
-            var model = new CreateEditCommentViewModel();            
+            var model = new CreateEditCommentViewModel();
             model.Body = myComment.Body;
             model.UpdatedReason = myComment.UpdatedReason;
             model.DateUpdated = myComment.DateUpdated;
@@ -381,12 +381,27 @@ namespace BlogProject.Controllers
                 .FirstOrDefault(p => p.Id == id);
 
             if (myComment != null)
-            {                
+            {
                 DbContext.AllComments.Remove(myComment);
                 DbContext.SaveChanges();
             }
 
             return RedirectToAction(nameof(BlogController.Details));
         }
+
+        [HttpPost]
+        public ActionResult Search(string myString)
+        {
+            var mySearch = myString;
+            var model = DbContext.AllPosts
+                .Where(p => p.Title.Contains(mySearch) || p.Body.Contains(mySearch))
+                .Select(p => new IndexPostBlogViewModel
+                {
+                    Title = p.Title,
+                    Body = p.Body                   
+
+                }).ToList();
+            return View(model);
+        }        
     }
 }
