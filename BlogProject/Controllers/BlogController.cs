@@ -388,7 +388,5 @@ namespace BlogProject.Controllers
 
             return RedirectToAction(nameof(BlogController.Details));
         }
-
-
     }
 }
